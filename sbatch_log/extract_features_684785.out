@@ -1,0 +1,21 @@
+Using device:  cpu 
+Traceback (most recent call last):
+  File "/usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/extract_features.py", line 68, in <module>
+    main()
+  File "/usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/extract_features.py", line 36, in main
+    model = torch.load(model_path)
+  File "/itet-stor/ddordevic/net_scratch/conda_envs/mscenv/lib/python3.10/site-packages/torch/serialization.py", line 712, in load
+    return _load(opened_zipfile, map_location, pickle_module, **pickle_load_args)
+  File "/itet-stor/ddordevic/net_scratch/conda_envs/mscenv/lib/python3.10/site-packages/torch/serialization.py", line 1049, in _load
+    result = unpickler.load()
+  File "/itet-stor/ddordevic/net_scratch/conda_envs/mscenv/lib/python3.10/site-packages/torch/serialization.py", line 1019, in persistent_load
+    load_tensor(dtype, nbytes, key, _maybe_decode_ascii(location))
+  File "/itet-stor/ddordevic/net_scratch/conda_envs/mscenv/lib/python3.10/site-packages/torch/serialization.py", line 1001, in load_tensor
+    wrap_storage=restore_location(storage, location),
+  File "/itet-stor/ddordevic/net_scratch/conda_envs/mscenv/lib/python3.10/site-packages/torch/serialization.py", line 175, in default_restore_location
+    result = fn(storage, location)
+  File "/itet-stor/ddordevic/net_scratch/conda_envs/mscenv/lib/python3.10/site-packages/torch/serialization.py", line 152, in _cuda_deserialize
+    device = validate_cuda_device(location)
+  File "/itet-stor/ddordevic/net_scratch/conda_envs/mscenv/lib/python3.10/site-packages/torch/serialization.py", line 136, in validate_cuda_device
+    raise RuntimeError('Attempting to deserialize object on a CUDA '
+RuntimeError: Attempting to deserialize object on a CUDA device but torch.cuda.is_available() is False. If you are running on a CPU-only machine, please use torch.load with map_location=torch.device('cpu') to map your storages to the CPU.

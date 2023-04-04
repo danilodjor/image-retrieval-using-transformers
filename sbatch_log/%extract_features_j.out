@@ -1,0 +1,7 @@
+Using device:  cpu 
+Traceback (most recent call last):
+  File "/usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/extract_features.py", line 63, in <module>
+    main()
+  File "/usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/extract_features.py", line 31, in main
+    model = torch.load(save_folder)
+UnboundLocalError: local variable 'save_folder' referenced before assignment

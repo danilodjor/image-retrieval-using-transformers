@@ -1,0 +1,29 @@
+Using device:  cpu 
+  0%|          | 0/60000 [00:00<?, ?it/s]/usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/extract_features.py:50: FutureWarning: The frame.append method is deprecated and will be removed from pandas in a future version. Use pandas.concat instead.
+  training_df.append(new_row, ignore_index=True)
+                                         Traceback (most recent call last):
+  File "/usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/extract_features.py", line 68, in <module>
+    main()
+  File "/usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/extract_features.py", line 50, in main
+    training_df.append(new_row, ignore_index=True)
+  File "/itet-stor/ddordevic/net_scratch/conda_envs/mscenv/lib/python3.10/site-packages/pandas/core/frame.py", line 9768, in append
+    return self._append(other, ignore_index, verify_integrity, sort)
+  File "/itet-stor/ddordevic/net_scratch/conda_envs/mscenv/lib/python3.10/site-packages/pandas/core/frame.py", line 9781, in _append
+    other = Series(other)
+  File "/itet-stor/ddordevic/net_scratch/conda_envs/mscenv/lib/python3.10/site-packages/pandas/core/series.py", line 436, in __init__
+    data, index = self._init_dict(data, index, dtype)
+  File "/itet-stor/ddordevic/net_scratch/conda_envs/mscenv/lib/python3.10/site-packages/pandas/core/series.py", line 529, in _init_dict
+    s = create_series_with_explicit_dtype(
+  File "/itet-stor/ddordevic/net_scratch/conda_envs/mscenv/lib/python3.10/site-packages/pandas/core/construction.py", line 915, in create_series_with_explicit_dtype
+    return Series(
+  File "/itet-stor/ddordevic/net_scratch/conda_envs/mscenv/lib/python3.10/site-packages/pandas/core/series.py", line 470, in __init__
+    data = sanitize_array(data, index, dtype, copy)
+  File "/itet-stor/ddordevic/net_scratch/conda_envs/mscenv/lib/python3.10/site-packages/pandas/core/construction.py", line 642, in sanitize_array
+    subarr = maybe_convert_platform(data)
+  File "/itet-stor/ddordevic/net_scratch/conda_envs/mscenv/lib/python3.10/site-packages/pandas/core/dtypes/cast.py", line 127, in maybe_convert_platform
+    arr = construct_1d_object_array_from_listlike(values)
+  File "/itet-stor/ddordevic/net_scratch/conda_envs/mscenv/lib/python3.10/site-packages/pandas/core/dtypes/cast.py", line 1784, in construct_1d_object_array_from_listlike
+    result[:] = values
+  File "/itet-stor/ddordevic/net_scratch/conda_envs/mscenv/lib/python3.10/site-packages/torch/_tensor.py", line 759, in __array__
+    return self.numpy().astype(dtype, copy=False)
+RuntimeError: Can't call numpy() on Tensor that requires grad. Use tensor.detach().numpy() instead.
