@@ -1,4 +1,0 @@
-  File "vit_torch.py", line 40
-    assert d % n_heads == 0, f"Can't divide dimension {d} into {n_heads} heads"
-                                                                              ^
-SyntaxError: invalid syntax

@@ -1,4 +1,0 @@
-Using device:  cuda (NVIDIA GeForce GTX 1080 Ti)
-Training: 0it [00:00, ?it/s]Training: 0it [00:00, ?it/s]
----------------------
-Saving the model under: /usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/model_save/vit_model_0404.pt

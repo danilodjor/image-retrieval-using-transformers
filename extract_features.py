@@ -14,7 +14,8 @@ Steps:
 """
 
 model_file = "vit_model_0404.pt"
-model_folder = "/usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/model_save/"
+# model_folder = "/usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/model_save/"
+model_folder = "C:/Users/danil/Desktop/Master thesis/Code/msc-thesis/model_save/"
 model_path = model_folder + model_file
 
   
@@ -43,23 +44,32 @@ def main():
 
     with torch.no_grad():
         # Feature extraction loop: Training set
+        # i = 0
         for batch in tqdm(train_loader, leave=False):
             x, y = batch
             x, y = x.to(device), y.to(device)
             x_features = model(x)
-            new_row = {'image': x.flatten(), 'feature': x_features, 'label': y}
-            training_df.append(new_row, ignore_index=True)
+            new_row = {'image': x[0].cpu(), 'feature': x_features[0].cpu(), 'label': y[0].cpu()} # saves an image CxHxW, and features
+            training_df = training_df.append(new_row, ignore_index=True)
+            # i+=1
+            # if i == 5:
+            #     break
 
         # Feature extraction loop: Test set
+        # i = 0
         for batch in tqdm(test_loader, leave=False):
             x, y = batch
             x, y = x.to(device), y.to(device)
             x_features = model(x)
-            new_row = {'image': x.flatten(), 'feature': x_features, 'label': y}
-            test_df.append(new_row, ignore_index=True)
+            new_row = {'image': x[0].cpu(), 'feature': x_features[0].cpu(), 'label': y[0].cpu()}
+            test_df = test_df.append(new_row, ignore_index=True)
+            # i += 1
+            # if i == 5:
+            #     break
 
     # Saving the dataframes with extracted features
-    save_folder = "/usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/extracted_features"
+    # save_folder = "/usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/extracted_features"
+    save_folder = "C:/Users/danil/Desktop/Master thesis/Code/msc-thesis/extracted_features"
     training_df.to_pickle(save_folder + "/training_mnist.pkl")
     test_df.to_pickle(save_folder + "/test_mnist.pkl")
 
