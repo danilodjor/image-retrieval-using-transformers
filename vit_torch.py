@@ -1,3 +1,13 @@
+""" 
+Trains a simplified ViT architecture (using only 2 encoders, each of which has only 2 heads) on the MNIST dataset classification task.
+Training settings:
+    - Epochs: 10
+    - Learning rate: 0.005
+    - Optimizer: Adam
+    - Number of patches that the transformer segments an image into: 7 per side (49 patches + 1 classification token = 50 tokens)
+
+"""
+
 import numpy as np
 
 from tqdm import tqdm, trange
