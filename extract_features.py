@@ -13,10 +13,25 @@ Steps:
     4. For each image save the final transformer layer representation of that image.
 """
 
+# Parameters:
+run_on_server = True 
+
 model_file = "vit_model_0404.pt"
-# model_folder = "/usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/model_save/"
-model_folder = "C:/Users/danil/Desktop/Master thesis/Code/msc-thesis/model_save/"
+train_features_file = "/training_mnist.pkl"
+test_features_file = "/test_mnist.pkl"
+
+if run_on_server:
+    model_folder =  "/usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/model_save/"
+    features_folder = "/usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/extracted_features"
+else:
+    model_folder =  "C:/Users/danil/Desktop/Master thesis/Code/msc-thesis/model_save/"
+    features_folder = "C:/Users/danil/Desktop/Master thesis/Code/msc-thesis/extracted_features"
+
+
+# Code (not supposed to be modified):
 model_path = model_folder + model_file
+train_features_path = features_folder + train_features_file
+test_features_path = features_folder + test_features_file
 
   
 def main():
@@ -68,10 +83,8 @@ def main():
             #     break
 
     # Saving the dataframes with extracted features
-    # save_folder = "/usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/extracted_features"
-    save_folder = "C:/Users/danil/Desktop/Master thesis/Code/msc-thesis/extracted_features"
-    training_df.to_pickle(save_folder + "/training_mnist.pkl")
-    test_df.to_pickle(save_folder + "/test_mnist.pkl")
+    training_df.to_pickle(train_features_path) #"/training_mnist.pkl")
+    test_df.to_pickle(test_features_path) #"/test_mnist.pkl")
 
     print('Sucessfully saved the dataframes containing extracted features in pickle files.')
 
