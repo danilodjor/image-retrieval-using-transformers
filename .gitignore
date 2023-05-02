@@ -57,3 +57,8 @@ test_outputs/run_6_test/vit_mnist_grid_2.png
 test_outputs/run_6_test/vit_mnist_grid_3.png
 test_outputs/run_6_test/vit_mnist_grid_4.png
 test_outputs/run_6_test/vit_mnist_grid_big_test.png
+sbatch_log/extract_features_695671.out
+sbatch_log/extract_features_695672.out
+sbatch_log/extract_features_695682.out
+sbatch_log/extract_features_695683.out
+sbatch_log/extract_features_695685.out

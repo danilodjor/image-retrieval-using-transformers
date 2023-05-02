@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import os
 from vit import *
 
 """ 
@@ -17,15 +18,15 @@ Steps:
 run_on_server = True 
 
 model_file = "vit_model_0404.pt"
-train_features_file = "/training_mnist.pkl"
-test_features_file = "/test_mnist.pkl"
+train_features_file = "training_mnist.pkl"
+test_features_file = "test_mnist.pkl"
 
 if run_on_server:
     model_folder =  "/usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/model_save/"
-    features_folder = "/usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/extracted_features"
+    features_folder = "/usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/extracted_features/"
 else:
     model_folder =  "C:/Users/danil/Desktop/Master thesis/Code/msc-thesis/model_save/"
-    features_folder = "C:/Users/danil/Desktop/Master thesis/Code/msc-thesis/extracted_features"
+    features_folder = "C:/Users/danil/Desktop/Master thesis/Code/msc-thesis/extracted_features/"
 
 
 # Code (not supposed to be modified):
@@ -35,6 +36,12 @@ test_features_path = features_folder + test_features_file
 
   
 def main():
+    # Check that folders exist
+    if not os.path.exists(model_folder):
+        raise Exception("Model folder does not exist.")
+    if not os.path.exists(features_folder):
+        raise Exception("Extracted features folder does not exist.")
+
     # Loading data
     transform = ToTensor()
 
@@ -64,8 +71,8 @@ def main():
             x, y = batch
             x, y = x.to(device), y.to(device)
             x_features = model(x)
-            new_row = {'image': x[0].cpu(), 'feature': x_features[0].cpu(), 'label': y[0].cpu()} # saves an image CxHxW, and features
-            training_df = training_df.append(new_row, ignore_index=True)
+            new_row = pd.DataFrame([{'image': x[0].cpu(), 'feature': x_features[0].cpu(), 'label': y[0].cpu()}]) # saves an image CxHxW, and features
+            training_df = pd.concat([training_df, new_row], ignore_index=True)
             # i+=1
             # if i == 5:
             #     break
@@ -76,8 +83,8 @@ def main():
             x, y = batch
             x, y = x.to(device), y.to(device)
             x_features = model(x)
-            new_row = {'image': x[0].cpu(), 'feature': x_features[0].cpu(), 'label': y[0].cpu()}
-            test_df = test_df.append(new_row, ignore_index=True)
+            new_row = pd.DataFrame([{'image': x[0].cpu(), 'feature': x_features[0].cpu(), 'label': y[0].cpu()}])
+            test_df = pd.concat([test_df, new_row], ignore_index=True)
             # i += 1
             # if i == 5:
             #     break
