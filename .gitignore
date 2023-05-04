@@ -67,3 +67,7 @@ CIFAR-10/test_mnist.pkl
 CIFAR-10/training_mnist.pkl
 MNIST/extracted_features/test_mnist.pkl
 MNIST/extracted_features/training_mnist.pkl
+sbatch_log/extract_features_696619.out
+CIFAR-10/test_cifar10.pkl
+CIFAR-10/training_cifar10.pkl
+sbatch_log/extract_features_696621.out

@@ -62,11 +62,11 @@ test_len = len(test_loader)
 
 
 # Load the model
-vit_b16_weights = torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1
-vit_b16_model = vit_b_16(weights=vit_b16_weights)
-vit_b16_model.heads = torch.nn.Identity()
-vit_b16_model.eval()
-vit_b16_transform = vit_b16_weights.transforms()
+# vit_b16_weights = torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1
+# vit_b16_model = vit_b_16(weights=vit_b16_weights)
+# vit_b16_model.heads = torch.nn.Identity()
+# vit_b16_model.eval()
+# vit_b16_transform = vit_b16_weights.transforms()
 
 # Main loop
 def main():
@@ -78,8 +78,8 @@ def main():
     print("Using device: ", device, f"({torch.cuda.get_device_name(device)})" if torch.cuda.is_available() else "")
     
     # Pandas dataframe containing flattened images, their corresponding features and labels (can be expanded with more features from other models)
-    training_df = pd.DataFrame(columns=['image','label'] + models.keys())
-    test_df = pd.DataFrame(columns=['image','label'] + models.keys())
+    training_df = pd.DataFrame(columns=['image','label'] + list(models.keys()))
+    test_df = pd.DataFrame(columns=['image','label'] + list(models.keys()))
 
     for key in models.keys():
         print(f'Key = {key}')
@@ -91,7 +91,7 @@ def main():
         # Main feature extraction loop
         with torch.no_grad():
             # Feature extraction loop: Training set
-            print('TRAINING: ')
+            print(f'TRAINING ({key}): ')
             for i, batch in enumerate(train_loader):
                 images, labels = batch
                 images, labels = images.to(device), labels.to(device)
@@ -103,7 +103,7 @@ def main():
                     print(f'{i}/{train_len}')
 
             # Feature extraction loop: Test set
-            print('TEST: ')
+            print(f'TEST ({key}): ')
             for i, batch in enumerate(test_loader):
                 images, labels = batch
                 images, labels = images.to(device), labels.to(device)
