@@ -62,3 +62,8 @@ sbatch_log/extract_features_695672.out
 sbatch_log/extract_features_695682.out
 sbatch_log/extract_features_695683.out
 sbatch_log/extract_features_695685.out
+MNIST/test_outputs/vit_mnist_grid_big.png
+CIFAR-10/test_mnist.pkl
+CIFAR-10/training_mnist.pkl
+MNIST/extracted_features/test_mnist.pkl
+MNIST/extracted_features/training_mnist.pkl

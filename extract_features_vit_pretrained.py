@@ -2,9 +2,10 @@ import pandas as pd
 import numpy as np
 import os
 from torchvision.models import vit_b_1, swin_t, swin_v2_t
-# from vit import *
+from vit import *
 
 """ 
+NOTE: Currently same as "extract_features.py" Need to experiment with extract_features_prelim.ipynb before doing this
 Extracts the features of the images in the MNIST dataset using the trained vision transformer.
 This way the database of MNIST images becomes a database of MNIST trasnformer feature representations.
 
@@ -18,7 +19,7 @@ Steps:
 # Parameters:
 run_on_server = True 
 
-# model_file = "vit_model_0404.pt"
+model_file = "vit_model_0404.pt"
 train_features_file = "training_mnist.pkl"
 test_features_file = "test_mnist.pkl"
 
@@ -31,7 +32,7 @@ else:
 
 
 # Code (not supposed to be modified):
-# model_path = model_folder + model_file
+model_path = model_folder + model_file
 train_features_path = features_folder + train_features_file
 test_features_path = features_folder + test_features_file
 
