@@ -74,47 +74,45 @@ def main():
     if not os.path.exists(features_folder):
         raise Exception("Extracted features folder does not exist.")
     
-    # Pandas dataframe containing flattened images, their corresponding features and labels (can be expanded with more features from other models)
-    training_df = pd.DataFrame(columns=['image','label','vit_b16_features', 'vit_b32_features'])
-    test_df = pd.DataFrame(columns=['image','label','vit_b16_features', 'vit_b32_features'])
-
-    # Defining run options
-    model = vit_b16_model
-    model_transform = vit_b16_transform
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Using device: ", device, f"({torch.cuda.get_device_name(device)})" if torch.cuda.is_available() else "")
+    
+    # Pandas dataframe containing flattened images, their corresponding features and labels (can be expanded with more features from other models)
+    training_df = pd.DataFrame(columns=['image','label'] + models.keys())
+    test_df = pd.DataFrame(columns=['image','label'] + models.keys())
 
-    # Main feature extraction loop
-    with torch.no_grad():
-        # Feature extraction loop: Training set
-        # i = 0
-        for i, batch in enumerate(train_loader):
-            images, labels = batch
-            images, labels = images.to(device), labels.to(device)
-            images_features = model(model_transform(images))
-            new_rows = pd.DataFrame([{'image': images[i].cpu(), 'vit_b16_features': images_features[i].cpu(), 'label': labels[i].cpu().item()} for i in range(batch_size)]) # saves an image CxHxW, and features
-            training_df = pd.concat([training_df, new_rows], ignore_index=True)
-            # i+=1
-            # if i == 3:
-            #     break
-            if i%10==0:
-                print(f'{i}/{train_len}')
+    for key in models.keys():
+        print(f'Key = {key}')
 
-        print('---------------')
+        model_weights = weights[key]
+        model_transform = model_weights.transforms()
+        model = models[key](weights = model_weights)
 
-        # Feature extraction loop: Test set
-        # i = 0
-        for i, batch in enumerate(test_loader):
-            images, labels = batch
-            images, labels = images.to(device), labels.to(device)
-            images_features = model(model_transform(images))
-            new_rows = pd.DataFrame([{'image': images[i].cpu(), 'vit_b16_features': images_features[i].cpu(), 'label': labels[i].cpu()} for i in range(batch_size)])
-            test_df = pd.concat([test_df, new_rows], ignore_index=True)
-            # i += 1
-            # if i == 3:
-            #     break
-            if i%10 == 0:
-                print(f"{i}/{test_len}")
+        # Main feature extraction loop
+        with torch.no_grad():
+            # Feature extraction loop: Training set
+            print('TRAINING: ')
+            for i, batch in enumerate(train_loader):
+                images, labels = batch
+                images, labels = images.to(device), labels.to(device)
+                images_features = model(model_transform(images))
+                new_rows = pd.DataFrame([{'image': images[i].cpu(), key: images_features[i].cpu(), 'label': labels[i].cpu().item()} for i in range(batch_size)]) # saves an image CxHxW, and features
+                training_df = pd.concat([training_df, new_rows], ignore_index=True)
+
+                if i%10==0:
+                    print(f'{i}/{train_len}')
+
+            # Feature extraction loop: Test set
+            print('TEST: ')
+            for i, batch in enumerate(test_loader):
+                images, labels = batch
+                images, labels = images.to(device), labels.to(device)
+                images_features = model(model_transform(images))
+                new_rows = pd.DataFrame([{'image': images[i].cpu(), key: images_features[i].cpu(), 'label': labels[i].cpu().item()} for i in range(batch_size)]) # saves an image CxHxW, and features
+                test_df = pd.concat([test_df, new_rows], ignore_index=True)
+
+                if i%10 == 0:
+                    print(f"{i}/{test_len}")
 
     # Saving the dataframes with extracted features
     training_df.to_pickle(train_features_path) #"/training_mnist.pkl")
