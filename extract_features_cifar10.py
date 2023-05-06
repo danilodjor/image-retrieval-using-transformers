@@ -67,33 +67,43 @@ def main():
     # Check that folders exist 
     if not os.path.exists(features_folder):
         raise Exception("Extracted features folder does not exist.")
-    
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Using device: ", device, f"({torch.cuda.get_device_name(device)})" if torch.cuda.is_available() else "")
-    
-    # Pandas dataframe containing flattened images, their corresponding features and labels (can be expanded with more features from other models)
+
+    # TRAINING
     if not os.path.exists(train_features_path):
         training_df = pd.DataFrame(columns=['image','label'])
 
         print('Initial train database save file in progress.')
+
         for i, batch in enumerate(train_loader):
             images, labels = batch
-            new_rows = pd.DataFrame([{'image': images[i].cpu(), 'label': labels[i].cpu().item()} for i in range(batch_size)]) # saves an image CxHxW, and features
+            new_rows = pd.DataFrame({'image': tuple(images), 'label':  tuple(labels)})
             training_df = pd.concat([training_df, new_rows], ignore_index=True)
+            if i%99 == 0:
+                print(f"{i}/{len(train_loader)}")
+
         training_df.to_pickle(train_features_path)
+
         print('Initial train database save file done.')
     else:
         print(f'Reading existing {train_features_file}')
         training_df = pd.read_pickle(train_features_path)
 
+    # TEST
     if not os.path.exists(test_features_path):
         print('Initial test database save file in progress.')
+
         test_df = pd.DataFrame(columns=['image','label'])
         for i, batch in enumerate(test_loader):
             images, labels = batch
-            new_rows = pd.DataFrame([{'image': images[i].cpu(), 'label': labels[i].cpu().item()} for i in range(batch_size)]) # saves an image CxHxW, and features
+            new_rows = pd.DataFrame({'image': tuple(images), 'label':  tuple(labels)})
             test_df = pd.concat([test_df, new_rows], ignore_index=True)
+            if i%99 == 0:
+                print(f"{i}/{len(test_loader)}")
         test_df.to_pickle(test_features_path)
+        
         print('Initial test database save file done.')
     else:
         print(f'Reading existing {test_features_file}')
@@ -120,30 +130,24 @@ def main():
         with torch.no_grad():
             # Feature extraction loop: Training set
             print(f'TRAINING ({key}): ')
-            model_features = torch.zeros(num_train_imgs, num_features)
+            model_features = np.zeros((num_train_imgs, num_features))
             for i in range(0, len(training_df), batch_size):
                 images = torch.stack(tuple(training_df.iloc[i:i+batch_size]['image']))
                 images = images.to(device)
                 model_features[i:i+batch_size] = model(model_transform(images))
-                print(i)
-                if i>20:
-                    break
-                if i % 99 == 0:
+                if i % 100 == 0:
                     print(f"{i+1}/{num_train_imgs}")
 
             training_df[key] = tuple(model_features)
 
             # Feature extraction loop: Test set
             print(f'TEST ({key}): ')
-            model_features = torch.zeros(num_test_imgs, num_features)
+            model_features = np.zeros((num_test_imgs, num_features))
             for i in range(0, len(test_df), batch_size):
                 images = torch.stack(tuple(test_df.iloc[i:i+batch_size]['image']))
                 images = images.to(device)
                 model_features[i:i+batch_size] = model(model_transform(images))
-                print(i)
-                if i>20:
-                    break
-                if i % 99 == 0:
+                if i % 100 == 0:
                     print(f"{i+1}/{num_test_imgs}")
 
             test_df[key] = tuple(model_features)
