@@ -43,7 +43,7 @@ transform = transforms.Compose(
     [transforms.ToTensor(),
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-batch_size = 8
+batch_size = 4
 
 train_set = torchvision.datasets.CIFAR10(root='../datasets/CIFAR-10', train=True,
                                         download=True, transform=transform)
@@ -74,29 +74,22 @@ def main():
     # Pandas dataframe containing flattened images, their corresponding features and labels (can be expanded with more features from other models)
     if not os.path.exists(train_features_path):
         training_df = pd.DataFrame(columns=['image','label'])
-
-        print('Initial train database save file in progress.')
         for i, batch in enumerate(train_loader):
             images, labels = batch
             new_rows = pd.DataFrame([{'image': images[i].cpu(), 'label': labels[i].cpu().item()} for i in range(batch_size)]) # saves an image CxHxW, and features
             training_df = pd.concat([training_df, new_rows], ignore_index=True)
         training_df.to_pickle(train_features_path)
-        print('Initial train database save file done.')
     else:
-        print(f'Reading existing {train_features_file}')
         training_df = pd.read_pickle(train_features_path)
 
     if not os.path.exists(test_features_path):
-        print('Initial test database save file in progress.')
         test_df = pd.DataFrame(columns=['image','label'])
         for i, batch in enumerate(test_loader):
             images, labels = batch
             new_rows = pd.DataFrame([{'image': images[i].cpu(), 'label': labels[i].cpu().item()} for i in range(batch_size)]) # saves an image CxHxW, and features
             test_df = pd.concat([test_df, new_rows], ignore_index=True)
         test_df.to_pickle(test_features_path)
-        print('Initial test database save file done.')
     else:
-        print(f'Reading existing {test_features_file}')
         test_df = pd.read_pickle(test_features_path)
 
     # Iterate over the models to be used (key is model)
@@ -121,12 +114,11 @@ def main():
             # Feature extraction loop: Training set
             print(f'TRAINING ({key}): ')
             model_features = torch.zeros(num_train_imgs, num_features)
-            for i in range(0, len(training_df), batch_size):
-                images = torch.stack(tuple(training_df.iloc[i:i+batch_size]['image']))
-                images = images.to(device)
-                model_features[i:i+batch_size] = model(model_transform(images))
-                print(i)
-                if i>20:
+            for i in range(len(training_df)):
+                image = training_df.iloc[i]['image'].unsqueeze(0)
+                image = image.to(device)
+                model_features[i] = model(model_transform(image))
+                if i==5:
                     break
                 if i % 99 == 0:
                     print(f"{i+1}/{num_train_imgs}")
@@ -136,12 +128,11 @@ def main():
             # Feature extraction loop: Test set
             print(f'TEST ({key}): ')
             model_features = torch.zeros(num_test_imgs, num_features)
-            for i in range(0, len(test_df), batch_size):
-                images = torch.stack(tuple(test_df.iloc[i:i+batch_size]['image']))
-                images = images.to(device)
-                model_features[i:i+batch_size] = model(model_transform(images))
-                print(i)
-                if i>20:
+            for i in range(len(test_df)):
+                image = test_df.iloc[i]['image'].unsqueeze(0)
+                image = image.to(device)
+                model_features[i] = model(model_transform(image))
+                if i==5:
                     break
                 if i % 99 == 0:
                     print(f"{i+1}/{num_test_imgs}")

@@ -71,3 +71,13 @@ sbatch_log/extract_features_696619.out
 CIFAR-10/test_cifar10.pkl
 CIFAR-10/training_cifar10.pkl
 sbatch_log/extract_features_696621.out
+CIFAR-10/test_cifar10_first.pkl
+CIFAR-10/training_cifar10_first.pkl
+CIFAR-10/training_cifar10_proba.pkl
+sbatch_log/extract_features_696805.out
+sbatch_log/extract_features_696839.out
+sbatch_log/extract_features_696868.out
+sbatch_log/extract_features_696879.out
+sbatch_log/extract_features_696880.out
+sbatch_log/extract_features_696881.out
+sbatch_log/extract_features_696883.out
