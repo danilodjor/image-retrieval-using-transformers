@@ -83,3 +83,12 @@ sbatch_log/extract_features_696881.out
 sbatch_log/extract_features_696883.out
 sbatch_log/extract_features_696971.out
 sbatch_log/extract_features_696976.out
+CIFAR-10/cifar10_big_vit_b16.png
+CIFAR-10/cifar10_big_vit_b32.png
+CIFAR-10/cifar10_vitb16_avg_precision.pkl
+CIFAR-10/cifar10_vitb32_avg_precision.pkl
+CIFAR-10/histogram_of_precisions_vit_b16.png
+CIFAR-10/histogram_of_precisions_vit_b32.png
+*.png
+*.pkl
+*.out
