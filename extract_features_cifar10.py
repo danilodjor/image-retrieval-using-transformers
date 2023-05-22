@@ -1,7 +1,7 @@
 import torch
 import torchvision
 import torchvision.transforms as transforms
-from torchvision.models import vit_b_16, vit_b_32, vit_l_16, vit_l_32, vit_h_14
+from torchvision.models import vit_b_16, vit_b_32, swin_b, swin_v2_b
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -19,41 +19,38 @@ Steps:
     4. For each image save the final transformer layer representation of that image.
 """
 
-# Parameters
-run_on_server = True
+# Models & transforms (used for feature extraction with pre-trained models) setup
 
-models = {"vit_b_16": vit_b_16, "vit_b_32": vit_b_32}
+models = {"vit_b_16": vit_b_16,\
+          "vit_b_32": vit_b_32,\
+          "swin_b": swin_b,\
+          "swin_v2_b": swin_v2_b}
+
 weights = {"vit_b_16": torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1,\
-           "vit_b_32": torchvision.models.ViT_B_32_Weights.IMAGENET1K_V1}
+           "vit_b_32": torchvision.models.ViT_B_32_Weights.IMAGENET1K_V1,\
+            "swin_b": torchvision.models.Swin_B_Weights.IMAGENET1K_V1,\
+            "swin_v2_b": torchvision.models.Swin_V2_B_Weights.IMAGENET1K_V1}
 
+img_transforms = {"vit_b_16": torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1.transforms,\
+              "vit_b_32": torchvision.models.ViT_B_32_Weights.IMAGENET1K_V1.transforms,\
+              "swin_b": torchvision.models.Swin_B_Weights.IMAGENET1K_V1.transforms,\
+              "swin_v2_b": torchvision.models.Swin_V2_B_Weights.IMAGENET1K_V1.transforms}
+
+# Folder setup
 train_features_file = "training_cifar10.pkl"
 test_features_file = "test_cifar10.pkl"
-
-# Don't change
-if run_on_server:
-    features_folder = "/usr/itetnas04/data-scratch-01/ddordevic/data/cluster_scripts/vit_copy/CIFAR-10/"
-else:
-    features_folder = "C:/Users/danil/Desktop/Master thesis/Code/msc-thesis/CIFAR-10/"
-
+features_folder = "./CIFAR-10/"
 train_features_path = features_folder + train_features_file
 test_features_path = features_folder + test_features_file
 
-# Dataset preparation
-transform = transforms.Compose(
-    [transforms.ToTensor(),
-     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+# Dataset setup
+batch_size = 16 # was 8
 
-batch_size = 8
+train_set = torchvision.datasets.CIFAR10(root='../datasets/CIFAR-10', train=True, download=True)
+train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=2)
 
-train_set = torchvision.datasets.CIFAR10(root='../datasets/CIFAR-10', train=True,
-                                        download=True, transform=transform)
-train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size,
-                                          shuffle=True, num_workers=2)
-
-test_set = torchvision.datasets.CIFAR10(root='../datasets/CIFAR-10', train=False,
-                                       download=True, transform=transform)
-test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size,
-                                         shuffle=False, num_workers=2)
+test_set = torchvision.datasets.CIFAR10(root='../datasets/CIFAR-10', train=False, download=True)
+test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=2)
 
 classes = ('plane', 'car', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
@@ -71,29 +68,29 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Using device: ", device, f"({torch.cuda.get_device_name(device)})" if torch.cuda.is_available() else "")
 
-    # TRAINING
+    # TRAINING: Initial dataframe
     if not os.path.exists(train_features_path):
-        training_df = pd.DataFrame(columns=['image','label'])
+        print('Initial train database save file in progress...')
 
-        print('Initial train database save file in progress.')
+        training_df = pd.DataFrame(columns=['image','label'])
 
         for i, batch in enumerate(train_loader):
             images, labels = batch
             new_rows = pd.DataFrame({'image': tuple(images), 'label':  tuple(labels)})
             training_df = pd.concat([training_df, new_rows], ignore_index=True)
-            if i%99 == 0:
-                print(f"{i}/{len(train_loader)}")
+            if i%100 == 0:
+                print(f"{i+1}/{len(train_loader)}")
 
         training_df.to_pickle(train_features_path)
 
         print('Initial train database save file done.')
     else:
-        print(f'Reading existing {train_features_file}')
+        print(f'Reading existing initial training features file')
         training_df = pd.read_pickle(train_features_path)
 
-    # TEST
+    # TEST: Initial dataframe
     if not os.path.exists(test_features_path):
-        print('Initial test database save file in progress.')
+        print('Initial test database save file in progress...')
 
         test_df = pd.DataFrame(columns=['image','label'])
         for i, batch in enumerate(test_loader):
@@ -113,50 +110,55 @@ def main():
     num_train_imgs = len(training_df)
     num_test_imgs = len(test_df)
 
-    for key in models.keys():
-        print(f'Key = {key}')
+    for model_name in models:
+        print('-----------------------------')
+        print(f'Current model = {model_name}')
 
-        model_weights = weights[key]
+        model_weights = weights[model_name]
         model_transform = model_weights.transforms()
-        model = models[key](weights = model_weights)
+        model = models[model_name](weights = model_weights)
+        model = model.to(device)
 
         num_features = model.heads[0].in_features
 
         model.heads = torch.nn.Identity()
         model.eval()
 
+        img_transform = img_transforms[model_name]
 
         # Main feature extraction loop
         with torch.no_grad():
             # Feature extraction loop: Training set
-            print(f'TRAINING ({key}): ')
+            print(f'TRAINING SET EXTRACTION ({model_name}): ')
             model_features = np.zeros((num_train_imgs, num_features))
             for i in range(0, len(training_df), batch_size):
                 images = torch.stack(tuple(training_df.iloc[i:i+batch_size]['image']))
                 images = images.to(device)
+                images = img_transform(images)
                 model_features[i:i+batch_size] = model(model_transform(images))
                 if i % 100 == 0:
                     print(f"{i+1}/{num_train_imgs}")
 
-            training_df[key] = tuple(model_features)
+            training_df[model_name] = tuple(model_features)
 
             # Feature extraction loop: Test set
-            print(f'TEST ({key}): ')
+            print(f'TEST SET EXTRACTION ({model_name}): ')
             model_features = np.zeros((num_test_imgs, num_features))
             for i in range(0, len(test_df), batch_size):
                 images = torch.stack(tuple(test_df.iloc[i:i+batch_size]['image']))
                 images = images.to(device)
+                images = img_transform(images)
                 model_features[i:i+batch_size] = model(model_transform(images))
                 if i % 100 == 0:
                     print(f"{i+1}/{num_test_imgs}")
 
-            test_df[key] = tuple(model_features)
+            test_df[model_name] = tuple(model_features)
 
     # Saving the dataframes with extracted features
-    training_df.to_pickle(train_features_path) #"/training_mnist.pkl")
-    test_df.to_pickle(test_features_path) #"/test_mnist.pkl")
+    training_df.to_pickle(train_features_path)
+    test_df.to_pickle(test_features_path)
 
-    print('Sucessfully saved the dataframes containing extracted features in pickle files.')
+    print('\n Successfully saved the dataframes containing extracted features in pickle files.')
 
 if __name__ == '__main__':
     main()
