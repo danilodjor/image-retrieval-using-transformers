@@ -117,14 +117,17 @@ def main():
         print('-----------------------------')
         print(f'Current model = {model_name}')
 
+        if (model_name in training_df.columns) and (model_name in test_df.columns):
+            continue
+
         model_weights = weights[model_name]
         model = models[model_name](weights = model_weights)
         model = model.to(device)
 
-        if model_name.startswith('swin'):
+        if model_name.startswith('swin'): # swin has different layer nomenclature
             num_features = model.head.in_features
             model.head = torch.nn.Identity()
-        elif model_name.startswith('vit'):
+        elif model_name.startswith('vit'): # all ViTs have the same layer nomenclature
             num_features = model.heads[0].in_features
             model.heads = torch.nn.Identity()
 
