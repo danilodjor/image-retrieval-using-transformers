@@ -36,6 +36,28 @@ label_to_class = {0:'airplane',\
                   8:'ship',\
                   9:'truck'}
 
+class_to_label = {'airplane':0,\
+                  'automobile':1,\
+                  'bird':2,\
+                  'cat':3,\
+                  'deer':4,\
+                  'dog':5,\
+                  'frog':6,\
+                  'horse':7,\
+                  'ship':8,\
+                  'truck':9}
+
+classes = {'airplane',\
+                  'automobile',\
+                  'bird',\
+                  'cat',\
+                  'deer',\
+                  'dog',\
+                  'frog',\
+                  'horse'\
+                  'ship'\
+                  'truck'}
+
 # For each model
 def random_query(models, num_queries:int, topK:int, train_df:pd.DataFrame, test_df:pd.DataFrame, save_folder:str, save_imgs:bool=True):
     num_images_test = len(test_df)
@@ -80,19 +102,21 @@ def random_query(models, num_queries:int, topK:int, train_df:pd.DataFrame, test_
 
             big_grid.append(grid)
 
-            # Save images to img_save_folder
-            # img_path = img_save_folder + img_name + str(i) + '.png'
-            # save_image(grid, img_path)
-
-        big_grid = make_grid(big_grid, nrow=1, normalize=True)
-
         if save_imgs:
-            save_image(big_grid, save_folder + 'CIFAR10_randQueries_' + model_str + '.png')
+            plt.figure()
+            big_grid = make_grid(big_grid, nrow=1, normalize=True)
+            plt.imshow(big_grid.permute(1,2,0))
+            plt.title(f'10 random queries and\n top 10 retrieved images [CIFAR-10, {model_str}]')
+            plt.axis('off')
+            plt.savefig(img_save_folder + f'CIFAR10_randQueries_{model_str}.png')
+            # save_image(big_grid, save_folder + 'CIFAR10_randQueries_' + model_str + '.png')
 
 def get_ap(models, train_df:pd.DataFrame, test_df:pd.DataFrame, save_folder:str, save_results=True):
 
     num_images_test = len(test_df)
     results = {model_str: False for model_str in models}
+
+    ap_classwise = {model_str: {label: [] for label in label_to_class.keys()} for model_str in models}
 
     for model_str in models:
         database_matrix = torch.Tensor(train_df[model_str]).to(device)
@@ -101,10 +125,11 @@ def get_ap(models, train_df:pd.DataFrame, test_df:pd.DataFrame, save_folder:str,
         database_labels = torch.Tensor(train_df['label']).to(device)
 
         for i in range(num_images_test):
-            query_ftrs = test_df.iloc[i]['vit_b_32']
+            query_ftrs = test_df.iloc[i][model_str]
             query_ftrs = torch.Tensor(query_ftrs).to(device)
 
-            query_label = torch.Tensor(test_df.iloc[i]['label']).to(device)
+            # query_label = torch.Tensor(test_df.iloc[i]['label']).to(device)
+            query_label = test_df.iloc[i]['label']
             
             target = torch.where(database_labels == query_label, True, False)
 
@@ -112,25 +137,46 @@ def get_ap(models, train_df:pd.DataFrame, test_df:pd.DataFrame, save_folder:str,
             preds = database_matrix @ query_ftrs
 
             ap_test[i] = retrieval_average_precision(preds, target)
+            ap_classwise[model_str][query_label].append(ap_test[i].cpu())
         
         results[model_str] = ap_test.cpu().numpy()
 
+        ap_test = ap_test.cpu()
+        
         # Plot the histogram of average precisions:
-        result = plt.hist(ap_test.numpy(), bins=100, range=(0,1), edgecolor='k')
-        plt.xlabel('Average Precision')
-        plt.ylabel('Count')
-        plt.title(f'Histogram of average precision values\n on the queries coming from the test set [CIFAR-10, {model_str}]')
-        plt.axvline(ap_test.mean(), color='r', linestyle='dashed', linewidth=1)
+        if save_results:
+            plt.figure()
+            plt.hist(ap_test.numpy(), bins=100, range=(0,1), edgecolor='k')
+            plt.xlabel('Average Precision')
+            plt.ylabel('Count')
+            plt.title(f'Histogram of average precision values\n on the queries coming from the test set [CIFAR-10, {model_str}]')
+            plt.axvline(ap_test.mean(), color='r', linestyle='dashed', linewidth=1)
 
-        min_ylim, max_ylim = plt.ylim()
-        plt.text(ap_test.mean()*0.65, max_ylim*0.9, 'Mean: {:.2f}'.format(ap_test.mean()))
-        plt.savefig(img_save_folder+f'CIFAR10_AP_hist_{model_str}.png', dpi=300)
+            min_ylim, max_ylim = plt.ylim()
+            plt.text(ap_test.mean()*0.65, max_ylim*0.9, 'Mean: {:.2f}'.format(ap_test.mean()))
+            plt.savefig(img_save_folder+f'CIFAR10_AP_hist_{model_str}.png', dpi=300)
 
+        # Plot the AP histograms for each class separately
+        fig, axs = plt.subplots(2, 5)
+        fig.suptitle(f'APs of CIFAR10 classes, {model_str}')
+        row=-1
+        col=0
+        for i, class_label in enumerate(label_to_class.keys()):
+            if i%5==0:
+                row+=1
+                col=0
+
+            axs[row, col].hist(np.array(ap_classwise[model_str][class_label]), bins=20, range=(0,1))
+            axs[row, col].set_title(f'{label_to_class[class_label]}')
+
+            col+=1
+        fig.tight_layout(pad=1.0)
+        plt.savefig(img_save_folder + f"CIFAR10_AP_hist_classwise_{model_str}", dpi=300)
+ 
     if save_results:
         torch.save(results, save_folder + 'CIFAR10_models_APs.pkl')
 
     
-
 def main():
     # Load the datasets
     database_train_df = pd.read_pickle(train_features_path)
@@ -141,7 +187,8 @@ def main():
 
     random_query(models=models,\
                  num_queries=10, topK=10,\
-                 train_df=database_train_df, test_df=database_test_df,
+                 train_df=database_train_df,\
+                 test_df=database_test_df,\
                  save_folder=img_save_folder,\
                  save_imgs=True)
 
@@ -151,9 +198,12 @@ def main():
     print('Getting average precision statistics...')
 
     get_ap(models=models,\
-           train_df=database_test_df,\
+           train_df=database_train_df,\
            test_df=database_test_df,\
            save_folder=img_save_folder,\
            save_results=True)
     
-    print(f'Successfully calculated average precision statistics and saved them to {img_save_folder}');
+    print(f'Successfully calculated average precision statistics and saved them to {img_save_folder}')
+
+if __name__ == '__main__':
+    main()
