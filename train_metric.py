@@ -11,26 +11,11 @@ from torchvision.models import vit_b_16, vit_b_32, swin_b
 from pytorch_metric_learning import distances, losses, miners, reducers, testers
 from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
 
+# Device setup
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Using device: ", device, f"({torch.cuda.get_device_name(device)})" if torch.cuda.is_available() else "")
 
-### MNIST code originally from https://github.com/pytorch/examples/blob/master/mnist/main.py ###
-models = {"vit_b_16": vit_b_16,\
-          "vit_b_32": vit_b_32,\
-          "swin_b": swin_b}
-          #"swin_v2_b": swin_v2_b}
-
-weights = {"vit_b_16": torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1,\
-           "vit_b_32": torchvision.models.ViT_B_32_Weights.IMAGENET1K_V1,\
-            "swin_b": torchvision.models.Swin_B_Weights.IMAGENET1K_V1}
-            #"swin_v2_b": torchvision.models.Swin_V2_B_Weights.IMAGENET1K_V1}
-
-img_transforms = {"vit_b_16": torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1.transforms,\
-              "vit_b_32": torchvision.models.ViT_B_32_Weights.IMAGENET1K_V1.transforms,\
-              "swin_b": torchvision.models.Swin_B_Weights.IMAGENET1K_V1.transforms}
-              #"swin_v2_b": torchvision.models.Swin_V2_B_Weights.IMAGENET1K_V1.transforms}
-
-model_name = "vit_b_16"
-
-### MNIST code originally from https://github.com/pytorch/examples/blob/master/mnist/main.py ###
+# Functions used in training
 def train(model, loss_func, mining_func, device, train_loader, optimizer, epoch):
     model.train()
     for batch_idx, (data, labels) in enumerate(train_loader):
@@ -48,14 +33,10 @@ def train(model, loss_func, mining_func, device, train_loader, optimizer, epoch)
                 )
             )
 
-
-### convenient function from pytorch-metric-learning ###
 def get_all_embeddings(dataset, model):
     tester = testers.BaseTester()
     return tester.get_all_embeddings(dataset, model)
 
-
-### compute accuracy using AccuracyCalculator from pytorch-metric-learning ###
 def test(train_set, test_set, model, accuracy_calculator):
     train_embeddings, train_labels = get_all_embeddings(train_set, model)
     test_embeddings, test_labels = get_all_embeddings(test_set, model)
@@ -67,29 +48,6 @@ def test(train_set, test_set, model, accuracy_calculator):
     )
     print("Test set accuracy (Precision@1) = {}".format(accuracies["precision_at_1"]))
 
-
-device = torch.device("cuda")
-
-transform = img_transforms[model_name]()
-
-batch_size = 64
-
-dataset1 = datasets.CIFAR10(root='../datasets/CIFAR-10', train=True, download=True, transform=transform)
-train_loader = torch.utils.data.DataLoader(dataset1, batch_size=batch_size, shuffle=True, num_workers=2)
-
-dataset2 = datasets.CIFAR10(root='../datasets/CIFAR-10', train=False, download=True, transform=transform)
-test_loader = torch.utils.data.DataLoader(dataset2, batch_size=batch_size, shuffle=False, num_workers=2)
-
-classes = ('plane', 'car', 'bird', 'cat',
-           'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-
-
-model_weights = weights[model_name]
-model = models[model_name](weights = model_weights).to(device)
-optimizer = optim.Adam(model.parameters(), lr=0.01)
-num_epochs = 1
-
-
 ### pytorch-metric-learning stuff ###
 distance = distances.CosineSimilarity()
 reducer = reducers.ThresholdReducer(low=0)
@@ -100,6 +58,50 @@ mining_func = miners.TripletMarginMiner(
 accuracy_calculator = AccuracyCalculator(include=("precision_at_1",), k=1)
 ### pytorch-metric-learning stuff ###
 
-for epoch in range(1, num_epochs + 1):
-    train(model, loss_func, mining_func, device, train_loader, optimizer, epoch)
-    test(dataset1, dataset2, model, accuracy_calculator)
+# Model setup
+models = {"vit_b_16": vit_b_16,\
+        "vit_b_32": vit_b_32,\
+        "swin_b": swin_b}
+        #"swin_v2_b": swin_v2_b}
+
+weights = {"vit_b_16": torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1,\
+            "vit_b_32": torchvision.models.ViT_B_32_Weights.IMAGENET1K_V1,\
+            "swin_b": torchvision.models.Swin_B_Weights.IMAGENET1K_V1}
+            #"swin_v2_b": torchvision.models.Swin_V2_B_Weights.IMAGENET1K_V1}
+
+img_transforms = {"vit_b_16": torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1.transforms,\
+            "vit_b_32": torchvision.models.ViT_B_32_Weights.IMAGENET1K_V1.transforms,\
+            "swin_b": torchvision.models.Swin_B_Weights.IMAGENET1K_V1.transforms}
+            #"swin_v2_b": torchvision.models.Swin_V2_B_Weights.IMAGENET1K_V1.transforms}
+
+# Main training loop:
+for model_name in models:
+    model_save_path = f'./model_save/{model_name}_finetuned.pth'
+
+    model_weights = weights[model_name]
+    model = models[model_name](weights = model_weights).to(device)
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    num_epochs = 10
+
+    # Dataset setup
+    transform = img_transforms[model_name]()
+    batch_size = 64
+
+    dataset1 = datasets.CIFAR10(root='../datasets/CIFAR-10', train=True, download=True, transform=transform)
+    train_loader = torch.utils.data.DataLoader(dataset1, batch_size=batch_size, shuffle=True, num_workers=2)
+
+    dataset2 = datasets.CIFAR10(root='../datasets/CIFAR-10', train=False, download=True, transform=transform)
+    test_loader = torch.utils.data.DataLoader(dataset2, batch_size=batch_size, shuffle=False, num_workers=2)
+
+    classes = ('plane', 'car', 'bird', 'cat',
+            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+
+    print(f'Starting training of {model_name}:')
+    for epoch in range(1, num_epochs + 1):
+        train(model, loss_func, mining_func, device, train_loader, optimizer, epoch)
+        print('Saving model...')
+        torch.save(model.state_dict(), model_save_path)
+        print('Finished training. Evaluating...')
+        test(dataset1, dataset2, model, accuracy_calculator)
+        print('Finished evaluation.')
+        print('Everything is done!')
