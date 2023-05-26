@@ -92,3 +92,4 @@ CIFAR-10/histogram_of_precisions_vit_b32.png
 *.png
 *.pkl
 *.out
+*.pth

@@ -75,11 +75,13 @@ img_transforms = {"vit_b_16": torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1.
             #"swin_v2_b": torchvision.models.Swin_V2_B_Weights.IMAGENET1K_V1.transforms}
 
 # Main training loop:
-for model_name in models:
+model_name_list = ["swin_b"]
+for model_name in model_name_list:
     model_save_path = f'./model_save/{model_name}_finetuned.pth'
 
     model_weights = weights[model_name]
     model = models[model_name](weights = model_weights).to(device)
+    
     optimizer = optim.Adam(model.parameters(), lr=0.01)
     num_epochs = 10
 
@@ -96,12 +98,20 @@ for model_name in models:
     classes = ('plane', 'car', 'bird', 'cat',
             'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
+    # Training loop
     print(f'Starting training of {model_name}:')
     for epoch in range(1, num_epochs + 1):
         train(model, loss_func, mining_func, device, train_loader, optimizer, epoch)
-        print('Saving model...')
-        torch.save(model.state_dict(), model_save_path)
-        print('Finished training. Evaluating...')
+    
+    print(f'Training of {model_name} in {num_epochs} done.')
+    print(f'Saving model {model_name}...')
+    torch.save(model.state_dict(), model_save_path)
+    print(f'Saved {model_name}')
+
+    print(f'Evaluating {model_name} on test set...')
+    with torch.no_grad():
         test(dataset1, dataset2, model, accuracy_calculator)
-        print('Finished evaluation.')
-        print('Everything is done!')
+
+    print(f'Finished evaluation of {model_name}.')
+
+print(f'All models trained, evaluated and saved is done!')
