@@ -18,6 +18,7 @@ print("Using device: ", device, f"({torch.cuda.get_device_name(device)})" if tor
 # Functions used in training
 def train(model, loss_func, mining_func, device, train_loader, optimizer, epoch):
     model.train()
+    num_batches = len(train_loader)
     for batch_idx, (data, labels) in enumerate(train_loader):
         data, labels = data.to(device), labels.to(device)
         optimizer.zero_grad()
@@ -28,9 +29,7 @@ def train(model, loss_func, mining_func, device, train_loader, optimizer, epoch)
         optimizer.step()
         if batch_idx % 20 == 0:
             print(
-                "Epoch {} Iteration {}: Loss = {}, Number of mined triplets = {}".format(
-                    epoch, batch_idx, loss, mining_func.num_triplets
-                )
+                f"Epoch {epoch} Iteration {batch_idx}/{num_batches}: Loss = {loss}, Number of mined triplets = {mining_func.num_triplets}"
             )
 
 def get_all_embeddings(dataset, model):
@@ -49,13 +48,13 @@ def test(train_set, test_set, model, accuracy_calculator):
     print("Test set accuracy (Precision@1) = {}".format(accuracies["precision_at_1"]))
 
 ### pytorch-metric-learning stuff ###
-distance = distances.CosineSimilarity()
+distance = distances.DotProductSimilarity() #CosineSimilarity()
 reducer = reducers.ThresholdReducer(low=0)
 loss_func = losses.TripletMarginLoss(margin=0.2, distance=distance, reducer=reducer)
 mining_func = miners.TripletMarginMiner(
     margin=0.2, distance=distance, type_of_triplets="semihard"
 )
-accuracy_calculator = AccuracyCalculator(include=("precision_at_1",), k=1)
+accuracy_calculator = AccuracyCalculator(include=("precision_at_1",), k=10)
 ### pytorch-metric-learning stuff ###
 
 # Model setup
@@ -76,18 +75,19 @@ img_transforms = {"vit_b_16": torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1.
 
 # Main training loop:
 model_name_list = ["swin_b"]
+num_epochs = 10
+batch_size = 32
+lr = 1e-6
 for model_name in model_name_list:
     model_save_path = f'./model_save/{model_name}_finetuned.pth'
 
     model_weights = weights[model_name]
     model = models[model_name](weights = model_weights).to(device)
     
-    optimizer = optim.Adam(model.parameters(), lr=0.01)
-    num_epochs = 10
-
+    optimizer = optim.Adam(model.parameters(), lr=lr)#0.01)
+    
     # Dataset setup
     transform = img_transforms[model_name]()
-    batch_size = 64
 
     dataset1 = datasets.CIFAR10(root='../datasets/CIFAR-10', train=True, download=True, transform=transform)
     train_loader = torch.utils.data.DataLoader(dataset1, batch_size=batch_size, shuffle=True, num_workers=2)
