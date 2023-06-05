@@ -21,18 +21,18 @@ Steps:
 # Models & transforms (used for feature extraction with pre-trained models) setup
 
 models = {"vit_b_16": vit_b_16,\
-          "vit_b_32": vit_b_32}#,\
-          #"swin_b": swin_b}
+          "vit_b_32": vit_b_32,\
+          "swin_b": swin_b}
           #"swin_v2_b": swin_v2_b}
 
 weights = {"vit_b_16": torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1,\
-           "vit_b_32": torchvision.models.ViT_B_32_Weights.IMAGENET1K_V1}#,\
-            #"swin_b": torchvision.models.Swin_B_Weights.IMAGENET1K_V1}
+           "vit_b_32": torchvision.models.ViT_B_32_Weights.IMAGENET1K_V1,\
+            "swin_b": torchvision.models.Swin_B_Weights.IMAGENET1K_V1}
             #"swin_v2_b": torchvision.models.Swin_V2_B_Weights.IMAGENET1K_V1}
 
 img_transforms = {"vit_b_16": torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1.transforms,\
-              "vit_b_32": torchvision.models.ViT_B_32_Weights.IMAGENET1K_V1.transforms}#,\
-              #"swin_b": torchvision.models.Swin_B_Weights.IMAGENET1K_V1.transforms}
+              "vit_b_32": torchvision.models.ViT_B_32_Weights.IMAGENET1K_V1.transforms,\
+              "swin_b": torchvision.models.Swin_B_Weights.IMAGENET1K_V1.transforms}
               #"swin_v2_b": torchvision.models.Swin_V2_B_Weights.IMAGENET1K_V1.transforms}
 
 # Folder setup
@@ -43,7 +43,7 @@ train_features_path = features_folder + train_features_file
 test_features_path = features_folder + test_features_file
 
 # Dataset setup
-batch_size = 64 # was 16
+batch_size = 32 # was 16
 
 train_set = torchvision.datasets.CIFAR10(root='../datasets/CIFAR-10', train=True, download=True, transform=transforms.ToTensor())
 train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=2)

@@ -22,7 +22,7 @@ train_features_path = features_folder + train_features_file
 test_features_path = features_folder + test_features_file
 
 # Models used to extract image features
-models = ["vit_b_16_finetuned", "vit_b_32_finetuned"]#, "swin_b"] # swin_b not just yet
+models = ["vit_b_16_finetuned", "vit_b_32_finetuned", "swin_b_finetuned"] # swin_b not just yet
 
 # Dataset-specific information
 label_to_class = {0:'airplane',\

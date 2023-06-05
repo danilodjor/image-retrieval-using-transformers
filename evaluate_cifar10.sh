@@ -4,4 +4,4 @@
 #SBATCH --mem=30G
 source /usr/itetnas04/data-scratch-01/ddordevic/data/conda/etc/profile.d/conda.sh
 conda activate mscenv3
-python -u evaluate_cifar10_finetuned.py "$@"
+python -u evaluate_cifar10.py "$@"
