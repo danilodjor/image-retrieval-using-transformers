@@ -149,6 +149,8 @@ def main():
                     print(f"{i+1}/{num_train_imgs}")
 
             training_df[model_name] = tuple(model_features)
+            training_df.to_pickle(train_features_path)
+            print(f'Saved {model_name} training features.')
 
             # Feature extraction loop: Test set
             print(f'TEST SET EXTRACTION ({model_name}): ')
@@ -160,15 +162,13 @@ def main():
                 images = gc_transform(images).unsqueeze(0)
                 images = images.to(device)
                 
-                model_features[i:i+batch_size] = np.array(gc_model(images).cpu())
+                model_features[i:i+batch_size] = np.array(gc_pool_layer(gc_model.forward_features(images)).cpu())
                 if i % 99 == 0:
                     print(f"{i+1}/{num_test_imgs}")
 
             test_df[model_name] = tuple(model_features)
-
-    # Saving the dataframes with extracted features
-    training_df.to_pickle(train_features_path)
-    test_df.to_pickle(test_features_path)
+            test_df.to_pickle(test_features_path)
+            print(f'Saved {model_name} test features.')
 
     print('#'*50 + '\n')
     print('Successfully saved the dataframes containing extracted features in pickle files.')
