@@ -36,8 +36,8 @@ img_transforms = {"vit_b_16": torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1.
               #"swin_v2_b": torchvision.models.Swin_V2_B_Weights.IMAGENET1K_V1.transforms}
 
 # Folder setup
-train_features_file = "training_cifar10.pkl"
-test_features_file = "test_cifar10.pkl"
+train_features_file = "training_cifar10_contr.pkl"
+test_features_file = "test_cifar10_contr.pkl"
 features_folder = "./CIFAR-10/"
 train_features_path = features_folder + train_features_file
 test_features_path = features_folder + test_features_file
@@ -115,7 +115,7 @@ def main():
 
     for model_name in models:
         print('-----------------------------')
-        print(f'Current model = {model_name}')
+        print(f'Current model = {model_name}' + '_contr')
 
         if (model_name in training_df.columns) and (model_name in test_df.columns):
             continue

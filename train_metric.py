@@ -10,6 +10,7 @@ from torchvision.models import vit_b_16, vit_b_32, swin_b
 
 from pytorch_metric_learning import distances, losses, miners, reducers, testers
 from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
+from pytorch_metric_learning.reducers import MultipleReducers, ThresholdReducer, MeanReducer
 
 # Device setup
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -29,7 +30,8 @@ def train(model, loss_func, mining_func, device, train_loader, optimizer, epoch)
         optimizer.step()
         if batch_idx % 20 == 0:
             print(
-                f"Epoch {epoch} Iteration {batch_idx}/{num_batches}: Loss = {loss}, Number of mined triplets = {mining_func.num_triplets}"
+                # f"Epoch {epoch} Iteration {batch_idx}/{num_batches}: Loss = {loss}, Number of mined triplets = {mining_func.num_triplets}"
+                f"Epoch {epoch} Iteration {batch_idx}/{num_batches}: Loss = {loss}"
             )
 
 def get_all_embeddings(dataset, model):
@@ -48,13 +50,23 @@ def test(train_set, test_set, model, accuracy_calculator):
     print("Test set accuracy (Precision@1) = {}".format(accuracies["precision_at_1"]))
 
 ### pytorch-metric-learning stuff ###
-distance = distances.DotProductSimilarity() #CosineSimilarity()
-reducer = reducers.ThresholdReducer(low=0)
-loss_func = losses.TripletMarginLoss(margin=0.2, distance=distance, reducer=reducer)
-mining_func = miners.TripletMarginMiner(
-    margin=0.2, distance=distance, type_of_triplets="semihard"
-)
-accuracy_calculator = AccuracyCalculator(include=("precision_at_1",), k=10)
+reducer_dict = {"pos_loss": ThresholdReducer(0.1), "neg_loss": MeanReducer()}
+reducer = MultipleReducers(reducer_dict)
+
+distance = distances.CosineSimilarity()
+loss_func = losses.ContrastiveLoss(pos_margin=1.0, neg_margin=0, distance=distance, reducer=reducer)
+mining_func = miners.MultiSimilarityMiner(epsilon=0.1)
+# accuracy_calculator = AccuracyCalculator(include=("precision_at_1",), k=10)
+accuracy_calculator = AccuracyCalculator(include=("mean_average_precision_at_r",), k=None)
+
+
+# distance = distances.DotProductSimilarity() #CosineSimilarity()
+# reducer = reducers.ThresholdReducer(low=0)
+# loss_func = losses.TripletMarginLoss(margin=0.2, distance=distance, reducer=reducer)
+# mining_func = miners.TripletMarginMiner(
+#     margin=0.2, distance=distance, type_of_triplets="semihard"
+# )
+
 ### pytorch-metric-learning stuff ###
 
 # Model setup
@@ -74,12 +86,13 @@ img_transforms = {"vit_b_16": torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1.
             #"swin_v2_b": torchvision.models.Swin_V2_B_Weights.IMAGENET1K_V1.transforms}
 
 # Main training loop:
-model_name_list = ["swin_b"]
+model_name_list = ["vit_b_16", "vit_b_32", "swin_b"]
 num_epochs = 10
+
 batch_size = 32
 lr = 1e-6
 for model_name in model_name_list:
-    model_save_path = f'./model_save/{model_name}_finetuned.pth'
+    model_save_path = f'./model_save/{model_name}_finetuned_contr.pth'
 
     model_weights = weights[model_name]
     model = models[model_name](weights = model_weights).to(device)

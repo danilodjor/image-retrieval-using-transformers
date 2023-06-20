@@ -14,16 +14,16 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device: ", device, f"({torch.cuda.get_device_name(device)})" if torch.cuda.is_available() else "")
 
 # Folder setup
-train_features_file = "training_cifar10.pkl"
-test_features_file = "test_cifar10.pkl"
+ext = "contr"
+train_features_file = f"training_cifar10_{ext}.pkl"
+test_features_file = f"test_cifar10_{ext}.pkl"
 features_folder = "./CIFAR-10/"
 img_save_folder = "./CIFAR-10/"
 train_features_path = features_folder + train_features_file
 test_features_path = features_folder + test_features_file
 
 # Models used to extract image features
-# models = ["vit_b_16_finetuned", "vit_b_32_finetuned", "swin_b_finetuned"] # swin_b not just yet
-models = ["gcvit_b_finetuned"]
+models = [f"vit_b_16_finetuned_{ext}", f"vit_b_32_finetuned_{ext}"]#, f"gcvit_b_finetuned_{ext}"]#,f"swin_b_finetuned_{ext}"] # swin_b not just yet
 
 # Dataset-specific information
 label_to_class = {0:'airplane',\

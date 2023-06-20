@@ -21,8 +21,8 @@ Steps:
 # Models & transforms (used for feature extraction with pre-trained models) setup
 
 models = {"vit_b_16": vit_b_16,\
-          "vit_b_32": vit_b_32,\
-          "swin_b": swin_b}
+          "vit_b_32": vit_b_32}#,\
+        #   "swin_b": swin_b}
           #"swin_v2_b": swin_v2_b}
 
 weights = {"vit_b_16": torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1,\
@@ -36,8 +36,10 @@ img_transforms = {"vit_b_16": torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1.
               #"swin_v2_b": torchvision.models.Swin_V2_B_Weights.IMAGENET1K_V1.transforms}
 
 # Folder setup
-train_features_file = "training_cifar10.pkl"
-test_features_file = "test_cifar10.pkl"
+ext = "contr"
+
+train_features_file = f"training_cifar10_{ext}.pkl"
+test_features_file = f"test_cifar10_{ext}.pkl"
 features_folder = "./CIFAR-10/"
 train_features_path = features_folder + train_features_file
 test_features_path = features_folder + test_features_file
@@ -56,7 +58,6 @@ classes = ('plane', 'car', 'bird', 'cat',
 
 train_len = len(train_loader) # number of batches
 test_len = len(test_loader)
-
 
 # Main loop
 def main():
@@ -114,7 +115,7 @@ def main():
     num_test_imgs = len(test_df)
 
     for model_name_base in models:
-        model_name = model_name_base + '_finetuned'
+        model_name = "_".join([model_name_base, 'finetuned', ext]) 
         print('-----------------------------')
         print(f'Current model = {model_name}')
 

@@ -7,7 +7,8 @@ import random
 from matplotlib import pyplot as plt
 
 from torchmetrics import RetrievalMAP
-from torchmetrics.functional import retrieval_average_precision
+from torchmetrics.functional import retrieval_average_precision, retrieval_recall, retrieval_precision
+from torch.nn import CosineSimilarity
 
 # Device setup
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -78,7 +79,8 @@ def random_query(models, num_queries:int, topK:int, train_df:pd.DataFrame, test_
             query_ftrs = torch.Tensor(query_ftrs).to(device) # transfer to CUDA for faster computations
 
             # Multiply the database matrix and the query feature vector (to be done for each query vector)
-            match_scores = database_matrix @ query_ftrs
+            # match_scores = database_matrix @ query_ftrs # inner product
+            match_scores = CosineSimilarity()(database_matrix, query_ftrs) # cosine similarity
             sorted_scores, sorted_ind = torch.sort(match_scores, descending=True)
 
             # Take K best matches
@@ -112,16 +114,33 @@ def random_query(models, num_queries:int, topK:int, train_df:pd.DataFrame, test_
             plt.savefig(img_save_folder + f'CIFAR10_randQueries_{model_str}.png')
             # save_image(big_grid, save_folder + 'CIFAR10_randQueries_' + model_str + '.png')
 
+# def cosine_similarity(A,B=None):
+#     """
+#     Calculates the cosine similiarites between rows of matrix A and matrix B.
+#     Equivalent to sklearn.metrics.pairwise.cosine_similarity, but faster.
+#     If B is empty, then the pairwise cosine similarities between rows of A will be used.
+#     """
+#     Anorm = A / np.linalg.norm(A, axis=-1)[:, np.newaxis]
+#     if B is None:
+#         Bnorm = Anorm
+#     else:
+#         Bnorm = B / np.linalg.norm(B, axis=-1)[:, np.newaxis]
+#     return np.dot(Anorm, Bnorm.T)
+
 def get_ap(models, train_df:pd.DataFrame, test_df:pd.DataFrame, save_folder:str, save_results=True):
 
     num_images_test = len(test_df)
-    results = {model_str: False for model_str in models}
+    results_ap = {model_str: False for model_str in models}
+    results_p = {model_str: False for model_str in models}
+    results_r = {model_str: False for model_str in models}
 
     ap_classwise = {model_str: {label: [] for label in label_to_class.keys()} for model_str in models}
 
     for model_str in models:
         database_matrix = torch.Tensor(train_df[model_str]).to(device)
         ap_test = torch.zeros(num_images_test).to(device)
+        p_test = torch.zeros(num_images_test).to(device)
+        r_test = torch.zeros(num_images_test).to(device)
 
         database_labels = torch.Tensor(train_df['label']).to(device)
 
@@ -135,12 +154,18 @@ def get_ap(models, train_df:pd.DataFrame, test_df:pd.DataFrame, save_folder:str,
             target = torch.where(database_labels == query_label, True, False)
 
             # Multiply the database matrix and the query feature vector
-            preds = database_matrix @ query_ftrs
+            # preds = database_matrix @ query_ftrs # preds = similarity scores # inner product
+            preds = CosineSimilarity()(database_matrix, query_ftrs) # cosine similarity
 
             ap_test[i] = retrieval_average_precision(preds, target)
+            p_test[i] = retrieval_precision(preds, target, k=10)
+            r_test[i] = retrieval_recall(preds, target, k=10)
+
             ap_classwise[model_str][query_label].append(ap_test[i].cpu())
         
-        results[model_str] = ap_test.cpu().numpy()
+        results_ap[model_str] = ap_test.cpu().numpy()
+        results_p[model_str] = p_test.cpu().numpy()
+        results_r[model_str] = r_test.cpu().numpy()
 
         ap_test = ap_test.cpu()
         
@@ -175,7 +200,7 @@ def get_ap(models, train_df:pd.DataFrame, test_df:pd.DataFrame, save_folder:str,
         plt.savefig(img_save_folder + f"CIFAR10_AP_hist_classwise_{model_str}", dpi=300)
  
     if save_results:
-        torch.save(results, save_folder + 'CIFAR10_models_APs.pkl')
+        torch.save(results_ap, save_folder + 'CIFAR10_models_APs.pkl')
 
     
 def main():

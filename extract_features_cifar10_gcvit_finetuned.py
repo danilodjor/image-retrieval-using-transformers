@@ -27,12 +27,14 @@ Steps:
 
 
 # Folder setup
-train_features_file = "training_cifar10.pkl"
-test_features_file = "test_cifar10.pkl"
+ext = "contr"
+
+train_features_file = f"training_cifar10_{ext}.pkl"
+test_features_file = f"test_cifar10_{ext}.pkl"
 features_folder = "./CIFAR-10/"
 train_features_path = features_folder + train_features_file
 test_features_path = features_folder + test_features_file
-model_name = 'gc_vit_b_finetuned'
+model_name = f'gc_vit_b_finetuned_{ext}'
 model_save_path = f'./model_save/{model_name}.pth'
 
 # Dataset setup
@@ -70,7 +72,7 @@ def main():
     )
     num_features = gc_model.head.fc.in_features
 
-    models = ['gcvit_b_finetuned']
+    models = [model_name]
     gc_model = gc_model.to(device)
 
     # TRAINING: Initial dataframe
