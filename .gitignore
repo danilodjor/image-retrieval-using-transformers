@@ -94,3 +94,6 @@ CIFAR-10/histogram_of_precisions_vit_b32.png
 *.out
 *.pth
 gc_vit.ipynb
+*.npy
+*.json
+*.pyc
