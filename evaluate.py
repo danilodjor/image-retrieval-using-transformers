@@ -58,6 +58,6 @@ if __name__ == '__main__':
     savedir = args.savedir
     K = args.K
 
-    filename = f"{model}_{dataset}_{method}_metrics.json"
+    filename = f"{model}_{dataset}_{method}_metrics"
 
     main(model, train_path, test_path, K, savedir)

@@ -108,4 +108,4 @@ def get_metrics(model_str, train_df:pd.DataFrame, test_df:pd.DataFrame, K: list[
 
     # Save the final evaluation result dictionary
     result_dict = {'model': model_str, 'AP': avg_prec, 'precision@k': precision, 'recall@k': recall}
-    np.save(f'{filename}.npy', result_dict)
+    np.save(save_folder + f'{filename}.npy', result_dict)
